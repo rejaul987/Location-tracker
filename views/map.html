@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GEO-INTEL // Surveillance Terminal</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --neon: #00ffcc;
+            --neon-dim: rgba(0, 255, 204, 0.15);
+            --neon-border: rgba(0, 255, 204, 0.35);
+            --bg-dark: #04090e;
+            --panel-bg: rgba(6, 17, 24, 0.88);
+            --alert-red: #ff3344;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: #d1f7ff;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Top Bar */
+        .topbar {
+            height: 52px;
+            background: var(--panel-bg);
+            border-bottom: 1px solid var(--neon-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.2rem;
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-title {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 2px;
+        }
+
+        .brand-sub {
+            font-size: 0.65rem;
+            color: var(--neon);
+            opacity: 0.8;
+            letter-spacing: 1px;
+        }
+
+        .target-badge {
+            background: var(--neon-dim);
+            border: 1px solid var(--neon);
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            color: var(--neon);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--neon);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--neon);
+            animation: blink 1.2s infinite ease-in-out;
+        }
+
+        /* Layout Grid */
+        .main-container {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            height: calc(100vh - 84px);
+            position: relative;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+            background: #000;
+        }
+
+        /* Map Cyber Color Tint (Tactical Green Vision) */
+        .leaflet-tile {
+            filter: brightness(0.8) contrast(1.3) hue-rotate(65deg) saturate(1.7) !important;
+        }
+
+        /* Cyber UI Overlay for Map Border */
+        .map-wrapper {
+            position: relative;
+            padding: 8px;
+            background: var(--bg-dark);
+        }
+
+        .map-frame {
+            width: 100%;
+            height: 100%;
+            border: 1px solid var(--neon-border);
+            position: relative;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        /* Right Telemetry Panel */
+        .side-panel {
+            background: var(--panel-bg);
+            border-left: 1px solid var(--neon-border);
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            overflow-y: auto;
+            backdrop-filter: blur(10px);
+        }
+
+        .section-header {
+            font-size: 0.75rem;
+            color: var(--neon);
+            border-bottom: 1px solid var(--neon-border);
+            padding-bottom: 4px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .telemetry-card {
+            background: rgba(0, 255, 204, 0.03);
+            border: 1px solid rgba(0, 255, 204, 0.15);
+            border-radius: 4px;
+            padding: 10px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .card-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+        }
+
+        .card-label {
+            color: #799fa6;
+        }
+
+        .card-value {
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .btn-action {
+            width: 100%;
+            padding: 10px;
+            background: var(--neon-dim);
+            border: 1px solid var(--neon);
+            color: var(--neon);
+            font-size: 0.85rem;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-action:hover {
+            background: var(--neon);
+            color: #000;
+            box-shadow: 0 0 15px var(--neon);
+        }
+
+        /* Bottom Status Line */
+        .bottombar {
+            height: 32px;
+            background: #020609;
+            border-top: 1px solid rgba(0, 255, 204, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 1.2rem;
+            font-size: 0.75rem;
+            color: #5d838c;
+        }
+
+        /* Hacker Target Crosshair Animation */
+        .hacker-target {
+            position: relative;
+            width: 50px;
+            height: 50px;
+        }
+
+        .crosshair-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 8px;
+            height: 8px;
+            background: var(--neon);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 10px var(--neon);
+        }
+
+        .crosshair-ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 44px;
+            height: 44px;
+            border: 1.5px dashed var(--neon);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            animation: rotateRadar 5s linear infinite;
+        }
+
+        .crosshair-pulse {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--neon);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            animation: pulseWave 1.8s ease-out infinite;
+        }
+
+        @keyframes rotateRadar {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        @keyframes pulseWave {
+            0% { width: 10px; height: 10px; opacity: 1; border-color: var(--neon); }
+            100% { width: 75px; height: 75px; opacity: 0; border-color: var(--neon); }
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.2; }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Top Nav -->
+    <header class="topbar">
+        <div class="brand">
+            <div>
+                <div class="brand-title">GEO-INTEL</div>
+                <div class="brand-sub">CYBER SURVEILLANCE & RECONNAISSANCE</div>
+            </div>
+        </div>
+        <div class="target-badge">
+            <div class="pulse-dot"></div>
+            <span>TARGET LOCK: <strong id="display-id">ACQUIRING...</strong></span>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="main-container">
+        <div class="map-wrapper">
+            <div class="map-frame">
+                <div id="map"></div>
+            </div>
+        </div>
+
+        <!-- Telemetry Panel -->
+        <aside class="side-panel">
+            <div class="section-header">// Target Telemetry</div>
+            <div class="telemetry-card">
+                <div class="card-row">
+                    <span class="card-label">DEVICE ID</span>
+                    <span class="card-value" id="val-id">--</span>
+                </div>
+                <div class="card-row">
+                    <span class="card-label">LATITUDE</span>
+                    <span class="card-value" id="val-lat">--</span>
+                </div>
+                <div class="card-row">
+                    <span class="card-label">LONGITUDE</span>
+                    <span class="card-value" id="val-lng">--</span>
+                </div>
+                <div class="card-row">
+                    <span class="card-label">PRECISION</span>
+                    <span class="card-value" id="val-acc">--</span>
+                </div>
+                <div class="card-row">
+                    <span class="card-label">LAST SIGNAL</span>
+                    <span class="card-value" id="val-time">--</span>
+                </div>
+            </div>
+
+            <div class="section-header">// Satellite Control</div>
+            <button class="btn-action" id="btn-recenter">Lock Target Focus</button>
+            <button class="btn-action" id="btn-maps" style="border-color: #5d838c; color: #a2cbd4; margin-top: 10px;">Open Google Maps</button>
+        </aside>
+    </div>
+
+    <!-- Status Bar -->
+    <footer class="bottombar">
+        <span>STATUS: SYSTEM OPERATIONAL // ENCRYPTED WS</span>
+        <span>SAT LINK: GOOGLE HYBRID SATELLITE (OPTICAL TINT)</span>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/socket.io@4.8.1/client-dist/socket.io.min.js"></script>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        const id = new URLSearchParams(location.search).get("id") || "UNKNOWN"
+        document.querySelector("#display-id").innerText = id
+        document.querySelector("#val-id").innerText = id
+
+        // Fallback agar server data khali ho
+        let latLng = [20.5937, 78.9629]
+        try {
+            const rawData = `{{ data }}`
+            if (rawData && rawData !== 'undefined') {
+                latLng = JSON.parse(rawData)
+            }
+        } catch (e) {
+            console.warn("Using default coordinates:", e)
+        }
+
+        let currentTargetPos = latLng
+
+        // Map setup
+        const map = L.map('map', { zoomControl: true }).setView(latLng, 14)
+
+        // Google Hybrid Satellite TileLayer
+        L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+            maxZoom: 20,
+            subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+        }).addTo(map)
+
+        // Map size glitch fix
+        setTimeout(() => {
+            map.invalidateSize()
+        }, 200)
+
+        // Radar Crosshair Hacker Marker
+        const hackerIcon = L.divIcon({
+            className: 'hacker-marker-wrapper',
+            html: `
+                <div class="hacker-target">
+                    <div class="crosshair-center"></div>
+                    <div class="crosshair-ring"></div>
+                    <div class="crosshair-pulse"></div>
+                </div>
+            `,
+            iconSize: [50, 50],
+            iconAnchor: [25, 25]
+        })
+
+        const marker = L.marker(latLng, { icon: hackerIcon }).addTo(map)
+
+        function updateTelemetry(lat, lng, accuracy = "± 10 m") {
+            document.querySelector("#val-lat").innerText = Number(lat).toFixed(5) + "° N"
+            document.querySelector("#val-lng").innerText = Number(lng).toFixed(5) + "° E"
+            document.querySelector("#val-acc").innerText = accuracy
+            document.querySelector("#val-time").innerText = new Date().toLocaleTimeString()
+        }
+
+        updateTelemetry(latLng[0], latLng[1])
+
+        // Live Socket Connection
+        const socket = io("", {
+            secure: true,
+            path: "/socket.io",
+            transports: ['websocket']
+        })
+
+        socket.on("map-data", data => {
+            if (data.id == id) {
+                currentTargetPos = [data.lat, data.lng]
+                marker.setLatLng(currentTargetPos)
+                map.flyTo(currentTargetPos, 16, { animate: true, duration: 1.5 })
+                updateTelemetry(data.lat, data.lng, data.accuracy ? `± ${Math.round(data.accuracy)} m` : "± 8 m")
+            }
+        })
+
+        // Action Buttons
+        document.querySelector("#btn-recenter").addEventListener("click", () => {
+            map.flyTo(currentTargetPos, 16, { animate: true, duration: 1.2 })
+        })
+
+        document.querySelector("#btn-maps").addEventListener("click", () => {
+            window.open(`https://www.google.com/maps?q=${currentTargetPos[0]},${currentTargetPos[1]}`, '_blank')
+        })
+    </script>
+</body>
+
+</html>

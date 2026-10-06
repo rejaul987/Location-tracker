@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>GEO-INTEL | Secure Login</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+    >
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #030607;
+            --panel: #071012;
+            --panel2: #091619;
+            --green: #00ff9d;
+            --cyan: #00d9ff;
+            --text: #e8fffa;
+            --muted: #668084;
+            --border: rgba(0, 255, 157, 0.18);
+        }
+
+        body {
+            min-height: 100vh;
+            background: var(--bg);
+            color: var(--text);
+            font-family: Inter, sans-serif;
+            overflow: hidden;
+        }
+
+        /* GRID BACKGROUND */
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+
+            background:
+                linear-gradient(
+                    rgba(0, 255, 157, 0.035) 1px,
+                    transparent 1px
+                ),
+                linear-gradient(
+                    90deg,
+                    rgba(0, 255, 157, 0.035) 1px,
+                    transparent 1px
+                );
+
+            background-size: 45px 45px;
+
+            pointer-events: none;
+        }
+
+        /* TOP BAR */
+
+        .topbar {
+            height: 70px;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            padding: 0 35px;
+
+            border-bottom: 1px solid var(--border);
+
+            background: rgba(2, 8, 10, 0.9);
+
+            position: relative;
+            z-index: 10;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+        }
+
+        .logo {
+            width: 38px;
+            height: 38px;
+
+            border: 1px solid var(--green);
+            border-radius: 50%;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            color: var(--green);
+
+            font-size: 20px;
+
+            box-shadow:
+                0 0 15px rgba(0, 255, 157, 0.15);
+        }
+
+        .brand-title {
+            font-family: "JetBrains Mono", monospace;
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 3px;
+        }
+
+        .brand-sub {
+            color: var(--muted);
+            font-family: "JetBrains Mono", monospace;
+            font-size: 8px;
+            letter-spacing: 2px;
+            margin-top: 4px;
+        }
+
+        .system-status {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+
+            color: var(--muted);
+
+            font-family: "JetBrains Mono", monospace;
+            font-size: 10px;
+            letter-spacing: 1px;
+        }
+
+        .online-dot {
+            width: 7px;
+            height: 7px;
+
+            background: var(--green);
+            border-radius: 50%;
+
+            box-shadow: 0 0 12px var(--green);
+        }
+
+        /* MAIN */
+
+        .main {
+            height: calc(100vh - 70px);
+
+            display: grid;
+
+            grid-template-columns: 1fr 430px;
+        }
+
+        /* LEFT SIDE */
+
+        .left {
+            position: relative;
+
+            display: flex;
+            align-items: center;
+
+            padding-left: 9%;
+
+            border-right: 1px solid var(--border);
+
+            overflow: hidden;
+        }
+
+        /* RADAR */
+
+        .radar {
+            position: absolute;
+
+            width: 620px;
+            height: 620px;
+
+            left: 25%;
+            top: 50%;
+
+            transform: translate(-50%, -50%);
+
+            border-radius: 50%;
+
+            border: 1px solid rgba(0, 255, 157, 0.09);
+
+            box-shadow:
+                0 0 0 70px rgba(0, 255, 157, 0.015),
+                0 0 0 140px rgba(0, 255, 157, 0.01),
+                0 0 0 210px rgba(0, 255, 157, 0.008);
+        }
+
+        .radar::before,
+        .radar::after {
+            content: "";
+
+            position: absolute;
+
+            background: rgba(0, 255, 157, 0.08);
+        }
+
+        .radar::before {
+            width: 1px;
+            height: 100%;
+
+            left: 50%;
+        }
+
+        .radar::after {
+            width: 100%;
+            height: 1px;
+
+            top: 50%;
+        }
+
+        /* CROSS */
+
+        .cross {
+            position: absolute;
+
+            left: 25%;
+            top: 50%;
+
+            transform: translate(-50%, -50%);
+
+            color: var(--green);
+
+            font-size: 22px;
+
+            text-shadow: 0 0 12px var(--green);
+        }
+
+        /* LEFT CONTENT */
+
+        .hero {
+            position: relative;
+            z-index: 2;
+
+            max-width: 650px;
+        }
+
+        .eyebrow {
+            color: var(--green);
+
+            font-family: "JetBrains Mono", monospace;
+
+            font-size: 11px;
+
+            letter-spacing: 3px;
+
+            margin-bottom: 20px;
+        }
+
+        .hero h1 {
+            font-size: clamp(45px, 5vw, 75px);
+
+            line-height: 0.95;
+
+            letter-spacing: -4px;
+        }
+
+        .hero h1 span {
+            color: var(--green);
+
+            text-shadow:
+                0 0 20px rgba(0, 255, 157, 0.15);
+        }
+
+        .hero p {
+            margin-top: 25px;
+
+            max-width: 510px;
+
+            color: var(--muted);
+
+            font-family: "JetBrains Mono", monospace;
+
+            font-size: 11px;
+
+            line-height: 1.8;
+        }
+
+        /* TERMINAL */
+
+        .terminal {
+            margin-top: 30px;
+
+            width: 490px;
+
+            padding: 16px 18px;
+
+            border: 1px solid rgba(0, 255, 157, 0.12);
+
+            background: rgba(2, 12, 14, 0.65);
+
+            font-family: "JetBrains Mono", monospace;
+
+            font-size: 10px;
+
+            line-height: 2;
+
+            color: #557477;
+        }
+
+        .terminal span {
+            color: var(--green);
+        }
+
+        /* LOGIN SIDE */
+
+        .right {
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            padding: 35px;
+
+            background: rgba(3, 10, 12, 0.7);
+        }
+
+        .login-box {
+            width: 100%;
+
+            padding: 35px;
+
+            position: relative;
+
+            background:
+                linear-gradient(
+                    145deg,
+                    rgba(9, 23, 27, 0.96),
+                    rgba(3, 12, 15, 0.96)
+                );
+
+            border: 1px solid rgba(0, 255, 157, 0.25);
+
+            box-shadow:
+                0 20px 60px rgba(0, 0, 0, 0.45),
+                inset 0 0 35px rgba(0, 255, 157, 0.02);
+        }
+
+        /* CORNER */
+
+        .corner {
+            position: absolute;
+
+            width: 18px;
+            height: 18px;
+
+            border-color: var(--green);
+        }
+
+        .corner.one {
+            top: -1px;
+            left: -1px;
+
+            border-top: 2px solid;
+            border-left: 2px solid;
+        }
+
+        .corner.two {
+            top: -1px;
+            right: -1px;
+
+            border-top: 2px solid;
+            border-right: 2px solid;
+        }
+
+        .corner.three {
+            bottom: -1px;
+            left: -1px;
+
+            border-bottom: 2px solid;
+            border-left: 2px solid;
+        }
+
+        .corner.four {
+            bottom: -1px;
+            right: -1px;
+
+            border-bottom: 2px solid;
+            border-right: 2px solid;
+        }
+
+        /* LOGIN HEADER */
+
+        .login-small {
+            color: var(--cyan);
+
+            font-family: "JetBrains Mono", monospace;
+
+            font-size: 9px;
+
+            letter-spacing: 2px;
+        }
+
+        .login-box h2 {
+            margin-top: 10px;
+
+            font-size: 28px;
+        }
+
+        .login-description {
+            margin-top: 8px;
+
+            color: var(--muted);
+
+            font-family: "JetBrains Mono", monospace;
+
+            font-size: 10px;
+        }
+
+        /* FORM */
+
+        .field {
+            margin-top: 23px;
+        }
+
+        label {
+            display: block;
+
+            margin-bottom: 8px;
+
+            color: #789396;
+
+            font-family: "JetBrains Mono", monospace;
+
+            font-size: 9px;
+
+            letter-spacing: 1px;
+        }
+
+        .input-box {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+
+            left: 14px;
+            top: 50%;
+
+            transform: translateY(-50%);
+
+            color: var(--green);
+
+            font-family: "JetBrains Mono", monospace;
+
+            font-size: 12px;
+        }
+
+        input {
+            width: 100%;
+
+            height: 50px;
+
+            padding: 0 42px;
+
+            background: #041014;
+
+            border: 1px solid #16454b;
+
+            border-radius: 3px;
+
+            outline: none;
+
+            color: var(--text);
+
+            font-family: "JetBrains Mono", monospace;
+
+            font-size: 12px;
+
+            transition: 0.2s;
+        }
+
+        input::placeholder {
+            color: #49696c;
+        }
+
+        input:focus {
+            border-color: var(--green);
+
+            box-shadow:
+                0 0 0 2px rgba(0, 255, 157, 0.06),
+                0 0 20px rgba(0, 255, 157, 0.05);
+        }
+
+        /* PASSWORD BUTTON */
+
+        .show-password {
+            position: absolute;
+
+            right: 12px;
+            top: 50%;
+
+            transform: translateY(-50%);
+
+            border: none;
+
+            background: transparent;
+
+            color: #547477;
+
+            cursor: pointer;
+
+            font-family: "JetBrains Mono", monospace;
+
+            font-size: 9px;
+        }
+
+        .show-password:hover {
+            color: var(--green);
+        }
+
+        /* OPTIONS */
+
+        .options {
+            margin-top: 18px;
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            color: #547477;
+
+            font-family: "JetBrains Mono", monospace;
+
+            font-size: 9px;
+        }
+
+        .remember {
+            display: flex;
+
+            align-items: center;
+
+            gap: 7px;
+        }
+
+        .remember input {
+            width: 12px;
+            height: 12px;
+
+            padding: 0;
+
+            accent-color: var(--green);
+        }
+
+        /* BUTTON */
+
+        .login-button {
+            width: 100%;
+
+            height: 51px;
+
+            margin-top: 23px;
+
+            border: 1px solid var(--green);
+
+            border-radius: 3px;
+
+            background: var(--green);
+
+            color: #00130c;
+
+            cursor: pointer;
+
+            font-family: "JetBrains Mono", monospace;
+
+            font-size: 11px;
+
+            font-weight: 700;
+
+            letter-spacing: 2px;
+
+            transition: 0.2s;
+        }
+
+        .login-button:hover {
+            background: #62ffc9;
+
+            box-shadow:
+                0 0 25px rgba(0, 255, 157, 0.25);
+
+            transform: translateY(-1px);
+        }
+
+        .login-button:active {
+            transform: translateY(0);
+        }
+
+        /* SECURITY */
+
+        .security {
+            display: flex;
+
+            justify-content: space-between;
+
+            margin-top: 23px;
+
+            padding-top: 17px;
+
+            border-top: 1px solid rgba(0, 255, 157, 0.1);
+
+            color: #46666a;
+
+            font-family: "JetBrains Mono", monospace;
+
+            font-size: 8px;
+        }
+
+        .security span:first-child {
+            color: var(--green);
+        }
+
+        /* FOOTER */
+
+        .footer {
+            position: fixed;
+
+            bottom: 13px;
+
+            left: 35px;
+            right: 35px;
+
+            display: flex;
+
+            justify-content: space-between;
+
+            color: #345356;
+
+            font-family: "JetBrains Mono", monospace;
+
+            font-size: 8px;
+
+            letter-spacing: 1px;
+
+            pointer-events: none;
+        }
+
+        /* MOBILE */
+
+        @media (max-width: 900px) {
+
+            body {
+                overflow: auto;
+            }
+
+            .main {
+                height: auto;
+
+                grid-template-columns: 1fr;
+            }
+
+            .left {
+                min-height: 500px;
+
+                border-right: none;
+
+                border-bottom: 1px solid var(--border);
+
+                padding: 70px 9%;
+            }
+
+            .right {
+                min-height: 550px;
+            }
+
+            .footer {
+                position: static;
+
+                padding: 15px 20px;
+            }
+        }
+
+        @media (max-width: 600px) {
+
+            .topbar {
+                padding: 0 18px;
+            }
+
+            .system-status {
+                display: none;
+            }
+
+            .hero h1 {
+                font-size: 43px;
+
+                letter-spacing: -2px;
+            }
+
+            .terminal {
+                width: 100%;
+            }
+
+            .right {
+                padding: 20px;
+            }
+
+            .login-box {
+                padding: 25px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- TOP BAR -->
+
+    <header class="topbar">
+
+        <div class="brand">
+
+            <div class="logo">
+                ⌾
+            </div>
+
+            <div>
+                <div class="brand-title">
+                    GEO-INTEL
+                </div>
+
+                <div class="brand-sub">
+                    LOCATION INTELLIGENCE SYSTEM
+                </div>
+            </div>
+
+        </div>
+
+
+        <div class="system-status">
+
+            <span class="online-dot"></span>
+
+            SYSTEM ONLINE
+
+            <span>|</span>
+
+            SECURE CONNECTION
+
+            <span>|</span>
+
+            V2.1.0
+
+        </div>
+
+    </header>
+
+
+    <!-- MAIN -->
+
+    <main class="main">
+
+        <!-- LEFT -->
+
+        <section class="left">
+
+            <div class="radar"></div>
+
+            <div class="cross">
+                ⊕
+            </div>
+
+
+            <div class="hero">
+
+                <div class="eyebrow">
+                    // SECURE OPERATIONS TERMINAL
+                </div>
+
+
+                <h1>
+                    LOCATION
+                    <span>INTELLIGENCE.</span>
+                </h1>
+
+
+                <p>
+                    Real-time geographic visualization and target
+                    management interface for authorized monitoring
+                    operations.
+                </p>
+
+
+                <div class="terminal">
+
+                    <div>
+                        &gt; INITIALIZING GEO-INTEL CORE...
+                        <span>OK</span>
+                    </div>
+
+                    <div>
+                        &gt; SECURE CHANNEL.............
+                        <span>ACTIVE</span>
+                    </div>
+
+                    <div>
+                        &gt; LOCATION NETWORK...........
+                        <span>READY</span>
+                    </div>
+
+                    <div>
+                        &gt; SYSTEM STATUS...............
+                        <span>ONLINE</span>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- LOGIN -->
+
+        <section class="right">
+
+            <form
+                class="login-box"
+                action="/login"
+                method="post"
+            >
+
+                <div class="corner one"></div>
+                <div class="corner two"></div>
+                <div class="corner three"></div>
+                <div class="corner four"></div>
+
+
+                <div class="login-small">
+                    ACCESS LEVEL // AUTH-01
+                </div>
+
+
+                <h2>
+                    Secure Access
+                </h2>
+
+
+                <p class="login-description">
+                    Authenticate to enter the tracking console.
+                </p>
+
+
+                <!-- USERNAME -->
+
+                <div class="field">
+
+                    <label for="username">
+                        OPERATOR ID
+                    </label>
+
+
+                    <div class="input-box">
+
+                        <span class="input-icon">
+                            &gt;_
+                        </span>
+
+
+                        <input
+                            id="username"
+                            type="text"
+                            name="username"
+                            placeholder="Enter username"
+                            autocomplete="username"
+                            required
+                            autofocus
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <!-- PASSWORD -->
+
+                <div class="field">
+
+                    <label for="password">
+                        ACCESS KEY
+                    </label>
+
+
+                    <div class="input-box">
+
+                        <span class="input-icon">
+                            #
+                        </span>
+
+
+                        <input
+                            id="password"
+                            type="password"
+                            name="password"
+                            placeholder="Enter password"
+                            autocomplete="current-password"
+                            required
+                        >
+
+
+                        <button
+                            type="button"
+                            class="show-password"
+                            id="showPassword"
+                        >
+                            SHOW
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <!-- OPTIONS -->
+
+                <div class="options">
+
+                    <label class="remember">
+
+                        <input type="checkbox">
+
+                        <span>
+                            Remember session
+                        </span>
+
+                    </label>
+
+
+                    <span>
+                        ENCRYPTED AUTH
+                    </span>
+
+                </div>
+
+
+                <!-- LOGIN -->
+
+                <button
+                    type="submit"
+                    class="login-button"
+                >
+                    AUTHENTICATE &nbsp; →
+                </button>
+
+
+                <!-- SECURITY -->
+
+                <div class="security">
+
+                    <span>
+                        ● AES-256
+                    </span>
+
+                    <span>
+                        ● TLS CHANNEL
+                    </span>
+
+                    <span>
+                        ● AUDIT LOG
+                    </span>
+
+                </div>
+
+            </form>
+
+        </section>
+
+    </main>
+
+
+    <!-- FOOTER -->
+
+    <footer class="footer">
+
+        <span>
+            GEO-INTEL // AUTHORIZED ACCESS ONLY
+        </span>
+
+        <span>
+            ALL SYSTEMS OPERATIONAL
+        </span>
+
+    </footer>
+
+
+    <!-- JAVASCRIPT -->
+
+    <script>
+
+        const password =
+            document.getElementById("password");
+
+        const showPassword =
+            document.getElementById("showPassword");
+
+
+        showPassword.addEventListener("click", () => {
+
+            if (password.type === "password") {
+
+                password.type = "text";
+
+                showPassword.textContent = "HIDE";
+
+            } else {
+
+                password.type = "password";
+
+                showPassword.textContent = "SHOW";
+
+            }
+
+        });
+
+    </script>
+
+</body>
+</html>
